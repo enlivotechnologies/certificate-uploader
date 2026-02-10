@@ -8,6 +8,7 @@ import cors from 'cors';
 import path from 'path';
 import env from './config/env.js';
 import certificateRoutes from './routes/certificateRoutes.js';
+import { preloadCertificateAssets } from './services/certificateService.js';
 import log from './utils/logger.js';
 
 // Ensure temp, uploads, and assets dirs exist
@@ -48,6 +49,7 @@ const port = env.port;
 ensureDirs().then(() => {
   const server = app.listen(port, () => {
     log.info(`Server running at http://localhost:${port}`);
+    preloadCertificateAssets().catch((err) => log.error('Preload certificate assets', err));
   });
   server.on('error', (err) => {
     if (err.code === 'EADDRINUSE') {

@@ -15,7 +15,7 @@ const router = Router();
 /**
  * POST /generate-certificate
  * Body: { name, email }
- * Generates one PDF (Canva background + overlaid name), emails it, deletes temp file.
+ * Generates PDF, responds immediately; email is sent in background for faster UX.
  */
 router.post('/generate-certificate', async (req, res) => {
   const { name, email } = req.body || {};
@@ -26,21 +26,34 @@ router.post('/generate-certificate', async (req, res) => {
     });
   }
 
+  const trimmedName = name.trim();
+  const trimmedEmail = email.trim();
   let pdfPath = null;
+
   try {
     const { pdfPath: generatedPath } = await generateCertificate({
-      name: name.trim(),
-      email: email.trim(),
+      name: trimmedName,
+      email: trimmedEmail,
     });
     pdfPath = generatedPath;
-    await sendCertificateEmail(email.trim(), pdfPath, name.trim());
-    log.success('Single certificate generated and emailed', { email, name });
+
+    // Respond immediately; send email in background so user sees fast success
     res.json({ success: true, message: 'Certificate generated and emailed successfully.' });
+
+    sendCertificateEmail(trimmedEmail, pdfPath, trimmedName)
+      .then(() => {
+        log.success('Single certificate emailed', { email: trimmedEmail, name: trimmedName });
+      })
+      .catch((err) => {
+        log.failure('Single certificate email', err?.message || String(err), { email: trimmedEmail });
+      })
+      .finally(() => {
+        if (pdfPath) deleteTempFile(pdfPath);
+      });
   } catch (err) {
     const msg = err && typeof err.message === 'string' ? err.message : 'Failed to generate or send certificate';
-    log.failure('Single certificate', msg, { email, name });
+    log.failure('Single certificate', msg, { email: trimmedEmail, name: trimmedName });
     res.status(500).json({ success: false, message: msg });
-  } finally {
     if (pdfPath) await deleteTempFile(pdfPath);
   }
 });

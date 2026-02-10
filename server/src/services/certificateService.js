@@ -1,6 +1,7 @@
 /**
  * Certificate generation: Canva PNG as static background, name overlay only.
  * Loads HTML template, replaces {{NAME}} and background image, generates PDF with Puppeteer.
+ * Caches template + background image and reuses a single browser instance for speed.
  */
 import fs from 'fs/promises';
 import path from 'path';
@@ -11,6 +12,10 @@ import log from '../utils/logger.js';
 const TEMPLATE_NAME = 'certificate.html';
 const BACKGROUND_IMAGE_NAME = 'certificate-bg.png';
 
+let cachedTemplate = null;
+let cachedBackgroundDataUrl = null;
+let browserInstance = null;
+
 /**
  * Escape HTML to prevent injection.
  */
@@ -20,28 +25,44 @@ function escapeHtml(text) {
 }
 
 /**
- * Load certificate template from disk.
+ * Load certificate template from disk (cached after first load).
  */
 async function loadTemplate() {
+  if (cachedTemplate) return cachedTemplate;
   const templatePath = path.join(env.paths.templates, TEMPLATE_NAME);
-  return fs.readFile(templatePath, 'utf-8');
+  cachedTemplate = await fs.readFile(templatePath, 'utf-8');
+  return cachedTemplate;
 }
 
 /**
- * Get background image as data URL so Puppeteer can render it (no file:// base URL issues).
+ * Get background image as data URL (cached after first load).
  */
 async function getBackgroundImageDataUrl() {
+  if (cachedBackgroundDataUrl) return cachedBackgroundDataUrl;
   const imagePath = path.join(env.paths.assets, BACKGROUND_IMAGE_NAME);
   try {
     const buf = await fs.readFile(imagePath);
     const base64 = buf.toString('base64');
-    return `data:image/png;base64,${base64}`;
+    cachedBackgroundDataUrl = `data:image/png;base64,${base64}`;
+    return cachedBackgroundDataUrl;
   } catch (err) {
     log.error('Certificate background image not found', err);
     throw new Error(
       `Place certificate-bg.png in server/assets/. Path used: ${imagePath}`
     );
   }
+}
+
+/**
+ * Get or create a shared Puppeteer browser (reused for all certificates).
+ */
+async function getBrowser() {
+  if (browserInstance && browserInstance.connected) return browserInstance;
+  browserInstance = await puppeteer.launch({
+    headless: true,
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+  });
+  return browserInstance;
 }
 
 /**
@@ -68,20 +89,18 @@ async function ensureTempDir() {
 }
 
 /**
- * Generate PDF from HTML. Dimensions match Canva design; printBackground enabled.
+ * Generate PDF from HTML using shared browser. Dimensions match Canva design; printBackground enabled.
+ * Uses 'load' instead of 'networkidle0' for faster render (no external resources in HTML).
  */
 async function htmlToPdf(html, outputFileName) {
   await ensureTempDir();
   const outputPath = path.join(env.paths.temp, outputFileName);
 
-  const browser = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
-  });
+  const browser = await getBrowser();
+  const page = await browser.newPage();
 
   try {
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: 'networkidle0' });
+    await page.setContent(html, { waitUntil: 'load' });
     await page.setViewport({
       width: env.certificateWidth,
       height: env.certificateHeight,
@@ -97,7 +116,7 @@ async function htmlToPdf(html, outputFileName) {
     log.info('PDF generated', { path: outputPath });
     return outputPath;
   } finally {
-    await browser.close();
+    await page.close();
   }
 }
 
@@ -131,4 +150,12 @@ export async function deleteTempFile(filePath) {
   } catch (err) {
     log.error('Failed to delete temp file', err);
   }
+}
+
+/**
+ * Preload template and background image so first request is fast. Call at server startup.
+ */
+export async function preloadCertificateAssets() {
+  await Promise.all([loadTemplate(), getBackgroundImageDataUrl()]);
+  log.info('Certificate template and background cached');
 }
