@@ -65,13 +65,11 @@ async function getBrowser() {
       const chromium = await import('@sparticuz/chromium').then(m => m.default || m);
       const puppeteerCore = await import('puppeteer-core').then(m => m.default || m);
 
-      // Essential for Vercel/AWS Lambda environment
-      chromium.setGraphicsMode = false;
-
       browserInstance = await puppeteerCore.launch({
-        args: [...chromium.args, '--disable-gpu', '--disable-dev-shm-usage', '--disable-setuid-sandbox', '--no-sandbox', '--no-zygote'],
+        args: [...chromium.args, '--disable-gpu', '--disable-dev-shm-usage', '--disable-setuid-sandbox', '--no-sandbox', '--single-process', '--no-zygote'],
         defaultViewport: chromium.defaultViewport,
         executablePath: await chromium.executablePath(),
+        // chromium.headless returns 'shell' in newer versions, which is correct for new headless mode
         headless: chromium.headless,
         ignoreHTTPSErrors: true,
       });
