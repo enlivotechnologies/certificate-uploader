@@ -20,7 +20,7 @@ const env = {
   },
   paths: {
     templates: path.join(__dirname, '../../templates'),
-    temp: path.join(__dirname, '../../temp'),
+    temp: process.env.VERCEL ? '/tmp' : path.join(__dirname, '../../temp'),
     assets: path.join(__dirname, '../../assets'),
   },
   // Certificate dimensions must match the Canva-exported PNG (default 1200×800)

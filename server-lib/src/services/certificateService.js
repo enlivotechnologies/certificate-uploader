@@ -5,7 +5,7 @@
  */
 import fs from 'fs/promises';
 import path from 'path';
-import puppeteer from 'puppeteer';
+// import puppeteer from 'puppeteer'; // Removed static import
 import env from '../config/env.js';
 import log from '../utils/logger.js';
 
@@ -58,10 +58,43 @@ async function getBackgroundImageDataUrl() {
  */
 async function getBrowser() {
   if (browserInstance && browserInstance.connected) return browserInstance;
-  browserInstance = await puppeteer.launch({
-    headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-  });
+
+  if (process.env.VERCEL) {
+    // Production/Vercel: Use puppeteer-core + @sparticuz/chromium
+    try {
+      const chromium = await import('@sparticuz/chromium').then(m => m.default || m);
+      const puppeteerCore = await import('puppeteer-core').then(m => m.default || m);
+
+      // Optional: Load specific font if needed, or rely on system fonts
+      // await chromium.font('https://.../font.ttf');
+
+      browserInstance = await puppeteerCore.launch({
+        args: chromium.args,
+        defaultViewport: chromium.defaultViewport,
+        executablePath: await chromium.executablePath(),
+        headless: chromium.headless,
+        ignoreHTTPSErrors: true,
+      });
+      log.info('Launched Puppeteer Core with Chromium');
+    } catch (err) {
+      log.error('Failed to launch Vercel browser', err);
+      throw err;
+    }
+  } else {
+    // Local Dev: Use full puppeteer
+    try {
+      const puppeteer = await import('puppeteer').then(m => m.default || m);
+      browserInstance = await puppeteer.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+      });
+      log.info('Launched standard Puppeteer');
+    } catch (err) {
+      log.error('Failed to launch local browser', err);
+      throw err;
+    }
+  }
+  
   return browserInstance;
 }
 

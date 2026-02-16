@@ -2,7 +2,7 @@
  * API client for Certificate Automation backend.
  * Uses relative /api so Vite proxy forwards to Express.
  */
-const BASE = '/api';
+const BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 async function request(endpoint, options = {}) {
   const url = endpoint.startsWith('http') ? endpoint : `${BASE}${endpoint}`;

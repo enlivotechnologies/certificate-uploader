@@ -31,8 +31,7 @@ Please find attached your Certificate of Participation.
 
 Thank you for your participation.
 
-Best regards,
-Certificate Automation Platform
+Best regards, Enlivo Technologies
 `;
 
 /**

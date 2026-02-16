@@ -29,7 +29,7 @@ app.get('/api/health', (_req, res) => {
   res.json({ ok: true, service: 'certificate-automation-api' });
 });
 
-app.use('/api', certificateRoutes);
+app.use(['/api', '/'], certificateRoutes);
 
 // 404
 app.use((_req, res) => {
@@ -45,21 +45,18 @@ app.use((err, _req, res, _next) => {
   res.status(status).json({ success: false, message });
 });
 
-const port = env.port;
-ensureDirs().then(() => {
-  const server = app.listen(port, () => {
-    log.info(`Server running at http://localhost:${port}`);
-    preloadCertificateAssets().catch((err) => log.error('Preload certificate assets', err));
+// Export app for Vercel
+export default app;
+
+// Only listen if run directly (local dev or traditional server)
+if (process.env.NODE_ENV !== 'production' || process.env.VERCEL_ENV !== 'production') {
+  const port = env.port;
+  ensureDirs().then(() => {
+    app.listen(port, () => {
+      log.info(`Server running at http://localhost:${port}`);
+      preloadCertificateAssets().catch((err) => log.error('Preload certificate assets', err));
+    });
+  }).catch((err) => {
+    log.error('Failed to create temp directories', err);
   });
-  server.on('error', (err) => {
-    if (err.code === 'EADDRINUSE') {
-      log.error(`Port ${port} is already in use. Stop the other process or set PORT in server/.env (e.g. PORT=5002).`, err);
-    } else {
-      log.error('Server error', err);
-    }
-    process.exit(1);
-  });
-}).catch((err) => {
-  log.error('Failed to create temp directories', err);
-  process.exit(1);
-});
+}
