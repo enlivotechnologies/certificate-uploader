@@ -65,17 +65,17 @@ async function getBrowser() {
       const chromium = await import('@sparticuz/chromium').then(m => m.default || m);
       const puppeteerCore = await import('puppeteer-core').then(m => m.default || m);
 
-      // Optional: Load specific font if needed, or rely on system fonts
-      // await chromium.font('https://.../font.ttf');
+      // Essential for Vercel/AWS Lambda environment
+      chromium.setGraphicsMode = false;
 
       browserInstance = await puppeteerCore.launch({
-        args: chromium.args,
+        args: [...chromium.args, '--disable-gpu', '--disable-dev-shm-usage', '--disable-setuid-sandbox', '--no-sandbox', '--no-zygote'],
         defaultViewport: chromium.defaultViewport,
         executablePath: await chromium.executablePath(),
         headless: chromium.headless,
         ignoreHTTPSErrors: true,
       });
-      log.info('Launched Puppeteer Core with Chromium');
+      log.info('Launched Puppeteer Core with Chromium (Vercel Mode)');
     } catch (err) {
       log.error('Failed to launch Vercel browser', err);
       throw err;
