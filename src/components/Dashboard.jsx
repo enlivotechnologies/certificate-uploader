@@ -6,7 +6,7 @@ export default function Dashboard({ activeTab, onTabChange }) {
     <header className="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 text-white shadow-xl">
       <div className="max-w-4xl mx-auto px-6 py-6">
         <h1 className="text-2xl font-bold tracking-tight text-white">
-          Certificate Automation Platform
+          Certificate & Automation Platform
         </h1>
         <nav className="flex gap-1 mt-5 rounded-lg bg-slate-800/60 p-1 w-fit">
           <button
