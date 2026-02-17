@@ -56,6 +56,7 @@ async function getBackgroundImageDataUrl() {
 /**
  * Get or create a shared Puppeteer browser (reused for all certificates).
  */
+
 async function getBrowser() {
   if (browserInstance && browserInstance.connected) return browserInstance;
 
@@ -63,13 +64,16 @@ async function getBrowser() {
     // Production/Vercel: Use puppeteer-core + @sparticuz/chromium
     try {
       const chromium = await import('@sparticuz/chromium').then(m => m.default || m);
-      const puppeteerCore = await import('puppeteer-core').then(m => m.default || m);
+      const puppeteer = await import('puppeteer-core').then(m => m.default || m);
 
-      browserInstance = await puppeteerCore.launch({
-        args: [...chromium.args, '--disable-gpu', '--disable-dev-shm-usage', '--disable-setuid-sandbox', '--no-sandbox', '--single-process', '--no-zygote'],
+      // Optional: Set strict args if needed, but sparticuz/chromium defaults are usually enough
+      // chromium.setHeadlessMode = true; // if needed
+      // chromium.setGraphicsMode = false; // if needed
+
+      browserInstance = await puppeteer.launch({
+        args: chromium.args,
         defaultViewport: chromium.defaultViewport,
         executablePath: await chromium.executablePath(),
-        // chromium.headless returns 'shell' in newer versions, which is correct for new headless mode
         headless: chromium.headless,
         ignoreHTTPSErrors: true,
       });
