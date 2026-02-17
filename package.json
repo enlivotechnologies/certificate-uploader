@@ -4,7 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "engines": {
-    "node": "18.x"
+    "node": "20.x"
   },
   "scripts": {
     "dev": "concurrently \"vite\" \"npm run dev:server\"",
@@ -14,13 +14,13 @@
     "start": "node server-lib/src/index.js"
   },
   "dependencies": {
-    "@sparticuz/chromium": "^119.0.2",
+    "@sparticuz/chromium": "^123.0.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.21.0",
     "multer": "^1.4.5-lts.1",
     "nodemailer": "^6.9.14",
-    "puppeteer-core": "^21.5.2",
+    "puppeteer-core": "^22.6.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
@@ -29,7 +29,7 @@
     "autoprefixer": "^10.4.20",
     "concurrently": "^9.0.1",
     "postcss": "^8.4.49",
-    "puppeteer": "^21.5.2",
+    "puppeteer": "^22.6.0",
     "tailwindcss": "^3.4.15",
     "vite": "^5.4.10"
   }
