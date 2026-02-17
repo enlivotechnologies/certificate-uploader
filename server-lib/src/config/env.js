@@ -19,9 +19,13 @@ const env = {
     pass: typeof process.env.SMTP_PASS === 'string' ? process.env.SMTP_PASS.trim().replace(/\s+/g, '') : undefined,
   },
   paths: {
-    templates: path.join(__dirname, '../../templates'),
+    templates: process.env.VERCEL 
+      ? path.join(process.cwd(), 'server-lib/templates') 
+      : path.join(__dirname, '../../templates'),
     temp: process.env.VERCEL ? '/tmp' : path.join(__dirname, '../../temp'),
-    assets: path.join(__dirname, '../../assets'),
+    assets: process.env.VERCEL 
+      ? path.join(process.cwd(), 'server-lib/assets') 
+      : path.join(__dirname, '../../assets'),
   },
   // Certificate dimensions must match the Canva-exported PNG (default 1200×800)
   certificateWidth: parseInt(process.env.CERTIFICATE_WIDTH || '1200', 10),

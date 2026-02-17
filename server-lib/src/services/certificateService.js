@@ -66,15 +66,18 @@ async function getBrowser() {
       const chromium = await import('@sparticuz/chromium').then(m => m.default || m);
       const puppeteer = await import('puppeteer-core').then(m => m.default || m);
 
-      // Optional: Set strict args if needed, but sparticuz/chromium defaults are usually enough
-      // chromium.setHeadlessMode = true; // if needed
-      // chromium.setGraphicsMode = false; // if needed
+      const executablePath = await chromium.executablePath();
+      log.info('Vercel Chromium Path', { executablePath, headless: chromium.headless });
+
+      if (!executablePath) {
+        throw new Error('Chromium executablePath is null or undefined');
+      }
 
       browserInstance = await puppeteer.launch({
         args: chromium.args,
         defaultViewport: chromium.defaultViewport,
-        executablePath: await chromium.executablePath(),
-        headless: chromium.headless,
+        executablePath: executablePath,
+        headless: chromium.headless === undefined ? 'new' : chromium.headless,
         ignoreHTTPSErrors: true,
       });
       log.info('Launched Puppeteer Core with Chromium (Vercel Mode)');
