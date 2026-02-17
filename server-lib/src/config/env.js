@@ -3,6 +3,7 @@
  * Load and validate required env vars; defaults for optional ones.
  */
 import dotenv from 'dotenv';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import path from 'path';
 
@@ -31,6 +32,24 @@ const env = {
   certificateWidth: parseInt(process.env.CERTIFICATE_WIDTH || '1200', 10),
   certificateHeight: parseInt(process.env.CERTIFICATE_HEIGHT || '800', 10),
 };
+
+if (process.env.VERCEL) {
+  try {
+    console.log('Current working directory:', process.cwd());
+    const libPath = path.join(process.cwd(), 'server-lib');
+    if (fs.existsSync(libPath)) {
+      console.log('server-lib contents:', fs.readdirSync(libPath));
+      const assetPath = path.join(libPath, 'assets');
+      if (fs.existsSync(assetPath)) {
+          console.log('assets contents:', fs.readdirSync(assetPath));
+      }
+    } else {
+      console.log('server-lib not found in CWD');
+    }
+  } catch (e) {
+    console.error('Failed to list directories', e);
+  }
+}
 
 /** Validate that email is configured when sending is required */
 export function validateEmailConfig() {
