@@ -10,7 +10,7 @@ import env from '../config/env.js';
 import log from '../utils/logger.js';
 
 const TEMPLATE_NAME = 'certificate.html';
-const BACKGROUND_IMAGE_NAME = 'certificate-bg.png';
+const BACKGROUND_IMAGE_NAME = 'certificate-bg.jpg';
 
 let cachedTemplate = null;
 let cachedBackgroundDataUrl = null;
@@ -43,12 +43,12 @@ async function getBackgroundImageDataUrl() {
   try {
     const buf = await fs.readFile(imagePath);
     const base64 = buf.toString('base64');
-    cachedBackgroundDataUrl = `data:image/png;base64,${base64}`;
+    cachedBackgroundDataUrl = `data:image/jpeg;base64,${base64}`;
     return cachedBackgroundDataUrl;
   } catch (err) {
     log.error('Certificate background image not found', err);
     throw new Error(
-      `Place certificate-bg.png in server/assets/. Path used: ${imagePath}`
+      `Place certificate-bg.jpg in server/assets/. Path used: ${imagePath}`
     );
   }
 }

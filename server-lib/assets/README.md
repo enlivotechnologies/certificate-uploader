@@ -2,7 +2,7 @@
 
 Place your Canva-exported certificate design here as:
 
-**`certificate-bg.png`**
+**`certificate-bg.jpg`**
 
 - Export from Canva as PNG.
 - Do not edit this image in code; it is used only as a full-size static background.
